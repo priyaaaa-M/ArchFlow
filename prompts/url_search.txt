@@ -1,0 +1,13 @@
+Return ONLY valid JSON in the form {"urls": [ ... ]}.
+
+TASK:
+Given a topic, return {COUNT} relevant URLs for system design HLD/LLD.
+
+RULES:
+1. Output ONLY JSON.
+2. Return exactly {COUNT} URLs.
+3. Prefer reputable engineering/system design write-ups.
+4. URLs must be fully qualified (https://...).
+
+TOPIC:
+{TOPIC}
