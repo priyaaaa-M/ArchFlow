@@ -15,6 +15,7 @@ interface ShapeNodeProps {
 
 const ShapeNode: React.FC<ShapeNodeProps> = ({ id, data, isConnectable, selected }) => {
     const [isEditing, setIsEditing] = useState(false);
+    const theme = document.documentElement.getAttribute('data-theme');
     const [label, setLabel] = useState(data.label);
     const inputRef = useRef<HTMLInputElement>(null);
     const { setNodes, deleteElements } = useReactFlow();
@@ -85,6 +86,8 @@ const ShapeNode: React.FC<ShapeNodeProps> = ({ id, data, isConnectable, selected
                     width: '10px',
                     height: '10px',
                     borderRadius: '50%',
+                    background: theme === 'dark' ? '#fbbf24' : '#6366f1',
+                    border: '2px solid white'
                 }}
             />
 

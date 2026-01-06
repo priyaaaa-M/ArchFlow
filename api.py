@@ -6,11 +6,17 @@ from typing import Any, Optional
 from dotenv import load_dotenv
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException
+import logging
+from starlette.requests import Request
 
 load_dotenv()
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+
+# Configure simple logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("ls-backend")
 
 from services.workflow import run_workflow
 from database import db
@@ -21,13 +27,67 @@ app = FastAPI(title="LS Hackathon Backend")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Serve static files from output directory
 app.mount("/files", StaticFiles(directory="output"), name="files")
+
+# Log at startup so we can verify the process has initialized
+@app.on_event("startup")
+async def startup_event():
+    logger.info("Starting LS Hackathon Backend (startup event)")
+    # print as an additional visible signal in dev environments where logging may be redirected
+    print("LS Hackathon Backend starting up")
+
+# Simple request logging middleware to help debug inbound requests
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    try:
+        # Log basic request line and a small subset of headers for brevity
+        h = {k: v for k, v in request.headers.items() if k.lower() in ("host","user-agent","origin","content-type")}
+        logger.info(f"Incoming request: {request.method} {request.url} - headers: {h}")
+    except Exception:
+        logger.exception("Failed to log request headers")
+
+    response = await call_next(request)
+    logger.info(f"Response {response.status_code} for {request.method} {request.url}")
+    return response
+
+# Root endpoint for quick checks
+@app.get("/")
+def root():
+    return {"status": "ok", "message": "LS Hackathon Backend"}
+
+# Short debug endpoint that echoes request headers so we can confirm connectivity
+@app.get("/debug")
+async def debug(request: Request):
+    logger.info("DEBUG endpoint hit")
+    headers = dict(request.headers)
+    return {"status": "ok", "headers": headers}
+
+# Echo endpoint to POST arbitrary bodies and see them in logs
+@app.post("/echo")
+async def echo(request: Request):
+    body = await request.body()
+    logger.info(f"Echo body: {body[:100]}")
+    return {"received": body.decode("utf-8", errors="replace")}
+
+# Temporary endpoint to force an ERROR-level log (helps when INFO logs are suppressed)
+@app.post("/log-error")
+async def log_error(request: Request):
+    """Accepts JSON {"message": "..."} or plain body and logs it at ERROR level."""
+    try:
+        data = await request.json()
+        msg = data.get("message")
+    except Exception:
+        body = await request.body()
+        msg = body.decode("utf-8", errors="replace") if body else None
+
+    logger.error(f"Forced error log: {msg}")
+    return {"status": "logged", "message": msg}
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
@@ -89,6 +149,7 @@ def health() -> dict:
 
 @app.post("/generate", response_model=GenerateResponse)
 def generate(req: GenerateRequest, background_tasks: BackgroundTasks) -> GenerateResponse:
+    logger.info(f"Received generate request: {req.title} ({req.type}) - payload: {req.dict()}")
     # Validate type parameter
     if req.type.upper() not in ["HLD", "LLD"]:
         raise HTTPException(status_code=400, detail="type must be either 'HLD' or 'LLD'")

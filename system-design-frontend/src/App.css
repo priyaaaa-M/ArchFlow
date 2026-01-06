@@ -17,66 +17,118 @@ a {
   color: inherit;
 }
 
+/* Main Layout Restructure */
 .app-shell {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 32px 24px 64px;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  overflow: hidden;
+  background: var(--bg-primary);
 }
 
-.hero {
-  background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
-  color: #fff;
-  padding: 24px;
-  border-radius: 16px;
+.main-layout {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  box-shadow: 0 15px 50px rgba(99, 102, 241, 0.25);
+  flex: 1;
+  overflow: hidden;
 }
 
-.hero h1 {
-  margin: 4px 0 8px;
-  font-size: 28px;
-  letter-spacing: -0.4px;
+.canvas-area {
+  flex: 1;
+  position: relative;
+  background: var(--canvas-bg);
 }
 
-.hero .sub {
-  margin: 0;
-  opacity: 0.9;
+/* Sidebar Sections */
+.sidebar-section {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.hero .eyebrow {
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-weight: 600;
-  font-size: 13px;
-  opacity: 0.9;
+.sidebar-section h2 {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  color: var(--text-primary);
 }
 
-.hero-actions {
-  display: flex;
-  align-items: center;
+.sidebar-section .form {
   gap: 12px;
-  flex-wrap: wrap;
 }
 
-.badge {
-  background: rgba(255, 255, 255, 0.18);
-  padding: 8px 12px;
-  border-radius: 10px;
+.sidebar-section .field span {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.sidebar-section input,
+.sidebar-section textarea {
+  padding: 8px 10px;
   font-size: 13px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border-color: var(--border-color);
 }
 
-.layout {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
+.sidebar-section .segmented {
+  background: var(--bg-primary);
+  border-color: var(--border-color);
+}
+
+.sidebar-section .segmented-item {
+  font-size: 11px;
+  padding: 6px 10px;
+  color: var(--text-secondary);
+}
+
+.sidebar-section .segmented-item.active {
+  background: var(--accent-color);
+  color: white;
+}
+
+.sidebar-section .actions {
+  margin-top: 8px;
+}
+
+/* Status Pill override */
+.status-pill {
+  font-size: 10px;
+  padding: 4px 8px;
+}
+
+/* Custom Node Theme Support */
+.react-flow__pane {
+  background: var(--canvas-bg);
+}
+
+.react-flow__background {
+  background: var(--canvas-bg);
+}
+
+.react-flow__edge-path {
+  stroke: var(--grid-color);
+}
+
+/* Component Grid override */
+.component-card {
+  background: var(--bg-primary);
+  border-color: var(--border-color);
+  padding: 8px;
+}
+
+.component-name {
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.component-type {
+  color: var(--text-secondary);
+  font-size: 10px;
+}
+
+.component-index {
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
 }
 
 .panel {
@@ -207,16 +259,6 @@ button.primary {
   box-shadow: 0 10px 25px rgba(34, 197, 94, 0.25);
 }
 
-.status-pill {
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: #f3f4f6;
-  color: #111827;
-  font-weight: 700;
-  font-size: 13px;
-  border: 1px solid #e5e7eb;
-}
-
 .status-queued {
   background: #fef3c7;
   color: #92400e;
@@ -298,37 +340,6 @@ button.primary {
   gap: 12px;
 }
 
-.component-card {
-  display: flex;
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #f8fafc;
-}
-
-.component-index {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #111827;
-  color: #fff;
-  display: grid;
-  place-items: center;
-  font-weight: 800;
-}
-
-.component-name {
-  margin: 0;
-  font-weight: 700;
-}
-
-.component-type {
-  margin: 4px 0 0;
-  color: #4b5563;
-  font-size: 14px;
-}
-
 .muted {
   color: #6b7280;
 }
@@ -392,15 +403,16 @@ button.primary {
   }
 }
 
-/* Custom Node Styles */
+/* Custom Node Styles Overrides */
 .editable-node {
-  background: white;
-  border: 1px solid #777;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 5px;
   padding: 10px;
   min-width: 150px;
   text-align: center;
   position: relative;
+  color: var(--text-primary);
 }
 
 .node-content {
@@ -416,7 +428,7 @@ button.primary {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #555;
+  color: var(--accent-color);
 }
 
 .node-input {
@@ -431,6 +443,7 @@ button.primary {
 .node-label {
   font-size: 14px;
   cursor: text;
+  color: var(--text-primary);
 }
 
 /* Handle Styles override if needed */

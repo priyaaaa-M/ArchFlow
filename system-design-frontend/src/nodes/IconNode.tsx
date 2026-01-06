@@ -15,6 +15,7 @@ interface IconNodeProps {
 
 const IconNode: React.FC<IconNodeProps> = ({ id, data, isConnectable, selected }) => {
     const [isEditing, setIsEditing] = useState(false);
+    const theme = document.documentElement.getAttribute('data-theme');
     const [label, setLabel] = useState(data.label);
     const inputRef = useRef<HTMLInputElement>(null);
     const { setNodes, deleteElements } = useReactFlow();
@@ -74,7 +75,7 @@ const IconNode: React.FC<IconNodeProps> = ({ id, data, isConnectable, selected }
     };
 
     return (
-        <div className={`icon-node ${selected ? 'selected' : ''}`} style={{ background: data.gradient }}>
+        <div className={`icon-node ${selected ? 'selected' : ''}`} style={{ background: theme === 'dark' ? 'rgba(255,255,255,0.05)' : data.gradient, border: theme === 'dark' ? '1px solid var(--border-color)' : 'none' }}>
             <NodeResizer
                 isVisible={selected}
                 minWidth={80}

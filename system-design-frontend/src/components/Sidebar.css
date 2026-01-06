@@ -9,35 +9,75 @@
     height: fit-content;
     max-height: calc(100vh - 200px);
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--bg-sidebar);
+    color: var(--text-primary);
+    transition: all var(--transition-speed);
 }
 
-.sidebar-header {
-    margin-bottom: 16px;
+.sidebar.collapsed {
+    align-items: center;
 }
 
-.sidebar-header h3 {
-    margin: 0 0 4px 0;
-    font-size: 18px;
+.sidebar-header-accordion {
+    padding: 16px 20px 10px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s ease;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    margin-bottom: 12px;
+}
+
+.sidebar-header-accordion:hover {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.header-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sidebar-header-accordion h3 {
+    margin: 0;
+    font-size: 15px;
     font-weight: 700;
-    background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+}
+
+.expand-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary-color, #6366f1);
 }
 
 .sidebar-description {
-    margin: 0;
-    font-size: 13px;
-    color: #6b7280;
+    margin: 4px 0 0;
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.sidebar.compact .sidebar-content {
+    max-height: 200px;
+    /* Limit height when compact */
+    transition: max-height 0.3s ease-out;
+}
+
+.sidebar.expanded .sidebar-content {
+    max-height: 1000px;
+    /* Allow expansion */
+    transition: max-height 0.3s ease-in;
 }
 
 .sidebar-tabs {
     display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
-    background: #f3f4f6;
-    border-radius: 10px;
-    padding: 4px;
+    padding: 0 10px;
+    gap: 5px;
+    margin-bottom: 10px;
 }
 
 .sidebar-tab {
@@ -95,6 +135,12 @@
     gap: 10px;
 }
 
+.icon-grid.compact {
+    grid-template-columns: repeat(3, 1fr);
+    /* 3 columns when compact to fit row */
+    gap: 8px;
+}
+
 .icon-item {
     display: flex;
     flex-direction: column;
@@ -108,6 +154,14 @@
     color: white;
     position: relative;
     overflow: hidden;
+    min-height: 80px;
+}
+
+.icon-item.compact {
+    padding: 8px 4px;
+    border-radius: 8px;
+    min-height: 52px;
+    /* 48-56px range */
 }
 
 .icon-item::before {
@@ -144,6 +198,15 @@
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
+.icon-item.compact .icon-wrapper {
+    margin-bottom: 2px;
+}
+
+.icon-item.compact svg {
+    width: 20px !important;
+    height: 20px !important;
+}
+
 .icon-label {
     font-size: 11px;
     font-weight: 600;
@@ -152,11 +215,24 @@
     line-height: 1.2;
 }
 
+.icon-item.compact .icon-label {
+    font-size: 9px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
 /* Shapes Tab */
 .shape-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
+}
+
+.shape-grid.compact {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
 }
 
 .shape-item {
@@ -170,6 +246,12 @@
     border: 2px solid #e5e7eb;
     cursor: grab;
     transition: all 0.2s ease;
+}
+
+.shape-item.compact {
+    padding: 8px 4px;
+    border-radius: 8px;
+    min-height: 52px;
 }
 
 .shape-item:hover {
@@ -190,9 +272,49 @@
     margin-bottom: 8px;
 }
 
+.shape-item.compact .shape-wrapper {
+    margin-bottom: 2px;
+}
+
 .shape-label {
     font-size: 11px;
     font-weight: 600;
     color: #4b5563;
     text-align: center;
+}
+
+.shape-item.compact .shape-label {
+    font-size: 9px;
+}
+
+/* Dark mode compatibility fixes */
+[data-theme='dark'] .sidebar-header-accordion {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] .sidebar-header-accordion:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme='dark'] .expand-toggle {
+    color: #818cf8;
+    /* Indigo-400 for better visibility in dark mode */
+}
+
+[data-theme='dark'] .shape-item {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+[data-theme='dark'] .shape-label {
+    color: #cbd5e1;
+}
+
+[data-theme='dark'] .sidebar-tab {
+    color: #94a3b8;
+}
+
+[data-theme='dark'] .sidebar-tab:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.05);
 }

@@ -13,6 +13,7 @@ interface EditableNodeProps {
 
 const EditableNode: React.FC<EditableNodeProps> = ({ id, data, isConnectable, selected }) => {
     const [isEditing, setIsEditing] = useState(false);
+    const theme = document.documentElement.getAttribute('data-theme');
     const [label, setLabel] = useState(data.label);
     const inputRef = useRef<HTMLInputElement>(null);
     const { setNodes, deleteElements } = useReactFlow();
@@ -70,7 +71,10 @@ const EditableNode: React.FC<EditableNodeProps> = ({ id, data, isConnectable, se
     };
 
     return (
-        <div className={`editable-node ${selected ? 'selected' : ''}`}>
+        <div className={`editable-node ${selected ? 'selected' : ''}`} style={{
+            borderColor: selected ? 'var(--accent-color)' : 'var(--border-color)',
+            boxShadow: selected ? `0 0 0 2px ${theme === 'dark' ? 'rgba(56, 189, 248, 0.4)' : 'rgba(14, 165, 233, 0.2)'}` : 'none'
+        }}>
             <Handle
                 type="target"
                 position={Position.Top}

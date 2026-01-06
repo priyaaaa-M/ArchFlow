@@ -1,32 +1,31 @@
-import React, { useState, useCallback } from 'react';
-import ReactFlow, {
+import React, { useState, useCallback, useEffect } from 'react';
+import {
   ReactFlowProvider,
   addEdge,
   useNodesState,
   useEdgesState,
-  Controls,
-  Background,
-  MiniMap,
   type Connection,
   type Edge,
   type Node,
   type ReactFlowInstance,
   Position,
   useViewport,
-  Panel,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import dagre from 'dagre';
-import { Download, Pencil, Trash2 } from 'lucide-react';
+import { toPng } from 'html-to-image';
 import { FaUser, FaServer, FaCompass, FaDatabase, FaTasks } from 'react-icons/fa';
 import { MdMap } from 'react-icons/md';
 import Sidebar from './components/Sidebar';
 import IconNode from './nodes/IconNode';
 import ShapeNode from './nodes/ShapeNode';
 import EditableNode from './EditableNode';
+import Header from './components/Header';
+import ResizableSidebar from './components/ResizableSidebar';
+import Canvas from './components/Canvas';
 import './App.css';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://127.0.0.1:8000";
 
 const nodeTypes = {
   editableNode: EditableNode,
@@ -118,8 +117,6 @@ function App() {
 
   const [status, setStatus] = useState<JobStatus>("idle");
   const [components, setComponents] = useState<ComponentItem[]>([]);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [gifUrl, setGifUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -129,13 +126,24 @@ function App() {
   const [paths, setPaths] = useState<string[]>([]);
   const [currentPath, setCurrentPath] = useState("");
 
+  // Theme state
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('theme');
+    return (saved as 'light' | 'dark') || 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
+
   const resetState = () => {
     setStatus("idle");
     setComponents([]);
     setNodes([]);
     setEdges([]);
-    setImageUrl(null);
-    setGifUrl(null);
     setError(null);
     setInfo("");
   };
@@ -180,53 +188,56 @@ function App() {
     [rfInstance, setNodes]
   );
 
-  const handleDownload = async (url: string, filename: string) => {
+  const exportAsImage = async () => {
+    const element = document.querySelector('.react-flow') as HTMLElement;
+    if (!element) return;
+
     try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const objectUrl = URL.createObjectURL(blob);
+      const dataUrl = await toPng(element, {
+        backgroundColor: theme === 'dark' ? '#121212' : '#ffffff',
+        cacheBust: true,
+      });
 
       const link = document.createElement('a');
-      link.href = objectUrl;
-      link.download = filename;
-      document.body.appendChild(link);
+      link.download = `architecture-${Date.now()}.png`;
+      link.href = dataUrl;
       link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(objectUrl);
     } catch (err) {
-      console.error("Download failed", err);
-      // Fallback to direct link if fetch fails
-      window.open(url, '_blank');
+      console.error("Export failed", err);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const triggerGeneration = async (overrideType?: "HLD" | "LLD") => {
     if (!title.trim()) {
       setError("Please enter a system title.");
       return;
     }
 
+    const currentType = overrideType || designType;
     setIsLoading(true);
     setError(null);
-    setInfo("Initializing generation...");
+    setInfo(`Initializing ${currentType} generation...`);
 
-    // Clear previous results
-    setImageUrl(null);
-    setGifUrl(null);
     setComponents([]);
     setNodes([]);
     setEdges([]);
 
+    console.log(`Attempting to hit backend at: ${BACKEND_URL}/generate`);
     try {
       const urls = urlsText.split('\n').map(u => u.trim()).filter(Boolean);
       const startRes = await fetch(`${BACKEND_URL}/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, type: designType, urls: urls.length ? urls : undefined }),
+        mode: 'cors',
+        body: JSON.stringify({ title, type: currentType, urls: urls.length ? urls : undefined }),
       });
 
-      if (!startRes.ok) throw new Error("Failed to start job");
+      console.log("Backend response status:", startRes.status);
+      if (!startRes.ok) {
+        const errText = await startRes.text();
+        console.error("Backend error response:", errText);
+        throw new Error(`Failed to start job: ${startRes.status} ${errText}`);
+      }
       const startData = await startRes.json();
       const jid = startData.job_id;
       setStatus("queued");
@@ -242,12 +253,9 @@ function App() {
       }
 
       if (finalStatus === "completed") {
-        setInfo("Job completed! Fetching results...");
+        setInfo(`${currentType} Diagram generated successfully.`);
         const rRes = await fetch(`${BACKEND_URL}/result/${jid}`);
         const rData = await rRes.json();
-
-        if (rData.png_url) setImageUrl(rData.png_url.startsWith('http') ? rData.png_url : `${BACKEND_URL}${rData.png_url}`);
-        if (rData.gif_url) setGifUrl(rData.gif_url.startsWith('http') ? rData.gif_url : `${BACKEND_URL}${rData.gif_url}`);
 
         if (rData.components) {
           setComponents(rData.components.components || []);
@@ -261,7 +269,7 @@ function App() {
             if (lowName.includes('master') || lowType.includes('master') || lowName.includes('server')) return <FaServer />;
             if (lowName.includes('db') || lowName.includes('database') || lowType.includes('database')) return <FaDatabase />;
             if (lowName.includes('queue') || lowName.includes('lobby') || lowType.includes('queue')) return <FaTasks />;
-            return <FaServer />; // Default
+            return <FaServer />;
           };
 
           const initialNodes = (rData.components.components || []).map((c: any) => ({
@@ -287,249 +295,134 @@ function App() {
           setNodes(lNodes);
           setEdges(lEdges);
         }
-        setInfo("Diagram generated successfully.");
       } else {
         setError(`Job ended with status: ${finalStatus}`);
       }
     } catch (err: any) {
-      setError(err.message);
+      console.error("Generation error:", err);
+      setError(err.message || "Failed to connect to backend");
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    triggerGeneration();
+  };
+
   return (
     <div className="app-shell">
-      <header className="hero">
-        <div>
-          <p className="eyebrow">Team Quirkless Code</p>
-          <h1>System Design Generator</h1>
-          <p className="sub">Submit a topic, wait for generation, view the diagram, and see detected components.</p>
-        </div>
-        <div className="hero-actions">
-          <span className="badge">Backend: {BACKEND_URL}</span>
-          <button className="ghost" type="button" onClick={resetState}>Reset</button>
-        </div>
-      </header>
+      <Header
+        theme={theme}
+        toggleTheme={toggleTheme}
+        onExport={exportAsImage}
+        onReset={resetState}
+        backendUrl={BACKEND_URL}
+      />
 
-      <div className="top-button-row">
-        <section className="panel button-panel">
-          <div className="flex justify-between items-center mb-4">
-            <h2>Generate a Diagram</h2>
-          </div>
-          <form className="form" onSubmit={handleSubmit}>
-            <label className="field">
-              <span>System Title</span>
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g., Uber backend system"
-              />
-            </label>
+      <div className="main-layout">
+        <ResizableSidebar>
+          <div className="sidebar-section">
+            <h2>Workflow Controls</h2>
+            <form className="form" onSubmit={handleSubmit}>
+              <label className="field">
+                <span>System Title</span>
+                <input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g., Uber backend"
+                />
+              </label>
 
-            <label className="field">
-              <span>Design Type</span>
-              <div className="segmented">
-                {["HLD", "LLD"].map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    className={designType === t ? "segmented-item active" : "segmented-item"}
-                    onClick={() => setDesignType(t as "HLD" | "LLD")}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            </label>
-
-            <label className="field">
-              <span>Reference URLs (optional)</span>
-              <textarea
-                value={urlsText}
-                onChange={(e) => setUrlsText(e.target.value)}
-                placeholder="Paste URLs here (one per line)"
-                rows={3}
-              />
-            </label>
-
-            <div className="actions flex items-center gap-4">
-              <button disabled={isLoading} type="submit" className="primary">
-                {isLoading ? "Generating..." : "Generate Design"}
-              </button>
-              {status !== 'idle' && (
-                <div className={`status-pill status-${status} whitespace-nowrap`}>
-                  Status: {status.toUpperCase()}
+              <label className="field">
+                <span>Design Type</span>
+                <div className="segmented">
+                  {["HLD", "LLD"].map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      className={designType === t ? "segmented-item active" : "segmented-item"}
+                      onClick={() => {
+                        setDesignType(t as "HLD" | "LLD");
+                        if (title.trim()) triggerGeneration(t as "HLD" | "LLD");
+                      }}
+                    >
+                      {t}
+                    </button>
+                  ))}
                 </div>
-              )}
-            </div>
+              </label>
 
-            {error && <div className="callout error mt-4">{error}</div>}
-            {info && <div className="callout info mt-4">{info}</div>}
-          </form>
-        </section>
+              <label className="field">
+                <span>Reference URLs</span>
+                <textarea
+                  value={urlsText}
+                  onChange={(e) => setUrlsText(e.target.value)}
+                  placeholder="One per line"
+                  rows={2}
+                />
+              </label>
 
-        <section className="panel button-panel">
-          <h2>Components Detected</h2>
-          {status === 'idle' ? (
-            <p className="muted mt-4">Start generating to see components.</p>
-          ) : (
-            <div className="component-grid mt-4" style={{ maxHeight: '250px', overflowY: 'auto' }}>
+              <div className="actions">
+                <button disabled={isLoading} type="submit" className="primary" style={{ width: '100%' }}>
+                  {isLoading ? "Generating..." : `Generate ${designType}`}
+                </button>
+                {status !== 'idle' && (
+                  <div className={`status-pill status-${status} mt-2 text-center`}>
+                    {status.toUpperCase()}
+                  </div>
+                )}
+              </div>
+
+              {error && <div className="callout error mt-2">{error}</div>}
+              {info && <div className="callout info mt-2">{info}</div>}
+            </form>
+          </div>
+
+          <div className="sidebar-section" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <h2>Detected Components</h2>
+            <div className="component-grid" style={{ overflowY: 'auto' }}>
               {components.map((comp, i) => (
                 <div key={i} className="component-card mb-2">
                   <div className="component-index">{i + 1}</div>
                   <div>
-                    <p className="component-name text-sm">{comp.name}</p>
-                    <p className="component-type text-xs">{comp.type}</p>
+                    <p className="component-name">{comp.name}</p>
+                    <p className="component-type">{comp.type}</p>
                   </div>
                 </div>
               ))}
-              {components.length === 0 && status === 'completed' && <p className="muted">No components detected.</p>}
+              {components.length === 0 && <p className="muted text-sm">No components yet.</p>}
             </div>
-          )}
-        </section>
-      </div>
+          </div>
 
-      <div className="layout">
-        <aside className="sidebar">
           <Sidebar />
-        </aside>
+        </ResizableSidebar>
 
-        <div className="main-column">
-          <main className="canvas-frame">
-            <ReactFlowProvider>
-              <div
-                className="canvas-section"
-                onMouseDown={(e) => {
-                  if (!isDrawing || !rfInstance) return;
-                  const pos = rfInstance.screenToFlowPosition({ x: e.clientX, y: e.clientY });
-                  setCurrentPath(`M ${pos.x} ${pos.y}`);
-                }}
-                onMouseMove={(e) => {
-                  if (!isDrawing || !currentPath || !rfInstance) return;
-                  const pos = rfInstance.screenToFlowPosition({ x: e.clientX, y: e.clientY });
-                  setCurrentPath((prev) => `${prev} L ${pos.x} ${pos.y}`);
-                }}
-                onMouseUp={() => {
-                  if (currentPath) {
-                    setPaths((prev) => [...prev, currentPath]);
-                    setCurrentPath("");
-                  }
-                }}
-                style={{ position: 'relative' }}
-              >
-                <ReactFlow
-                  nodes={nodes}
-                  edges={edges}
-                  onNodesChange={onNodesChange}
-                  onEdgesChange={onEdgesChange}
-                  onConnect={onConnect}
-                  onInit={setRfInstance}
-                  onDragOver={onDragOver}
-                  onDrop={onDrop}
-                  nodeTypes={nodeTypes}
-                  panOnDrag={!isDrawing}
-                  panOnScroll={!isDrawing}
-                  zoomOnScroll={!isDrawing}
-                  fitView
-                >
-                  <Background />
-                  <Controls />
-                  <MiniMap />
-                  <DrawingLayer paths={paths} currentPath={currentPath} />
-
-                  <Panel position="top-left" style={{ display: 'flex', gap: '8px' }}>
-                    <button
-                      className={`panel-button ${isDrawing ? 'active' : ''}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsDrawing(!isDrawing);
-                      }}
-                      title={isDrawing ? "Stop Drawing" : "Start Drawing"}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        padding: '0.5rem',
-                        borderRadius: '4px',
-                        border: '1px solid #ccc',
-                        background: isDrawing ? '#e0f2fe' : 'white',
-                        cursor: 'pointer',
-                        boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-                      }}
-                    >
-                      <Pencil size={16} />
-                      {isDrawing ? "Stop Drawing" : "Draw"}
-                    </button>
-
-                    {paths.length > 0 && (
-                      <button
-                        className="panel-button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setPaths([]);
-                          setCurrentPath("");
-                        }}
-                        title="Clear Drawings"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          padding: '0.5rem',
-                          borderRadius: '4px',
-                          border: '1px solid #ccc',
-                          background: 'white',
-                          cursor: 'pointer',
-                          boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-                          color: '#ef4444'
-                        }}
-                      >
-                        <Trash2 size={16} />
-                        Clear
-                      </button>
-                    )}
-                  </Panel>
-                </ReactFlow>
-              </div>
-            </ReactFlowProvider>
-          </main>
-
-          <section className="panel">
-            <h2>Results & Export</h2>
-            {(imageUrl || gifUrl) ? (
-              <div className="image-display-section mt-4">
-                {imageUrl && (
-                  <div className="image-container mb-4">
-                    <p className="font-bold text-sm mb-1">Static Diagram</p>
-                    <img src={imageUrl} className="generated-image" alt="Generated" />
-                    <button
-                      onClick={() => handleDownload(imageUrl, "diagram.png")}
-                      className="button secondary small mt-2 inline-flex items-center gap-2"
-                    >
-                      <Download size={16} />
-                      Download PNG
-                    </button>
-                  </div>
-                )}
-                {gifUrl && (
-                  <div className="image-container">
-                    <p className="font-bold text-sm mb-1">Animated Tour</p>
-                    <img src={gifUrl} className="generated-image" alt="Tour" />
-                    <button
-                      onClick={() => handleDownload(gifUrl, "tour.gif")}
-                      className="button secondary small mt-2 inline-flex items-center gap-2"
-                    >
-                      <Download size={16} />
-                      Download GIF
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <p className="muted mt-4 text-center">Images will appear here after generation.</p>
-            )}
-          </section>
-        </div>
+        <main className="canvas-area">
+          <ReactFlowProvider>
+            <Canvas
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              onInit={setRfInstance}
+              onDragOver={onDragOver}
+              onDrop={onDrop}
+              nodeTypes={nodeTypes}
+              isDrawing={isDrawing}
+              setIsDrawing={setIsDrawing}
+              paths={paths}
+              setPaths={setPaths}
+              currentPath={currentPath}
+              setCurrentPath={setCurrentPath}
+              rfInstance={rfInstance}
+              theme={theme}
+              DrawingLayer={DrawingLayer}
+            />
+          </ReactFlowProvider>
+        </main>
       </div>
     </div>
   );

@@ -93,7 +93,11 @@ const SHAPES: ShapeItem[] = [
     },
 ];
 
-const ShapesTab: React.FC = () => {
+interface ShapesTabProps {
+    isExpanded?: boolean;
+}
+
+const ShapesTab: React.FC<ShapesTabProps> = ({ isExpanded }) => {
     const onDragStart = (event: React.DragEvent, shapeItem: ShapeItem) => {
         event.dataTransfer.effectAllowed = 'move';
         event.dataTransfer.setData(
@@ -107,19 +111,21 @@ const ShapesTab: React.FC = () => {
         );
     };
 
+    const displayedShapes = isExpanded ? SHAPES : SHAPES.slice(0, 4);
+
     return (
         <div className="shapes-tab">
-            <div className="shape-grid">
-                {SHAPES.map((shapeItem) => (
+            <div className={`shape-grid ${!isExpanded ? 'compact' : ''}`}>
+                {displayedShapes.map((shapeItem) => (
                     <div
                         key={shapeItem.id}
-                        className="shape-item"
+                        className={`shape-item ${!isExpanded ? 'compact' : ''}`}
                         draggable
                         onDragStart={(e) => onDragStart(e, shapeItem)}
                         title={shapeItem.label}
                     >
                         <div className="shape-wrapper" style={{ color: shapeItem.color }}>
-                            {shapeItem.renderShape(60)}
+                            {shapeItem.renderShape(isExpanded ? 60 : 32)}
                         </div>
                         <span className="shape-label">{shapeItem.label}</span>
                     </div>

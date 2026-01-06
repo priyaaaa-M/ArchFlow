@@ -1,10 +1,39 @@
+*:root {
+  --bg-primary: #f4f6fb;
+  --bg-secondary: #ffffff;
+  --bg-sidebar: #ffffff;
+  --text-primary: #0f172a;
+  --text-secondary: #4b5563;
+  --border-color: #e2e8f0;
+  --accent-color: #0ea5e9;
+  --canvas-bg: #f8fafc;
+  --grid-color: #cbd5e1;
+  --card-bg: #ffffff;
+  --header-height: 60px;
+  --transition-speed: 0.3s;
+}
+
+[data-theme='dark'] {
+  --bg-primary: #121212;
+  --bg-secondary: #1a1a1a;
+  --bg-sidebar: #1a1a1a;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --border-color: #334155;
+  --accent-color: #38bdf8;
+  --canvas-bg: #0f0f0f;
+  --grid-color: #334155;
+  --card-bg: #1e293b;
+}
+
 * {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
 }
 
 body {
-  background: #f4f6fb;
-  min-height: 100vh;
+  margin: 0;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background var(--transition-speed), color var(--transition-speed);
 }

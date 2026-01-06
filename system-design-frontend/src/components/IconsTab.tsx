@@ -184,7 +184,11 @@ const ICONS: IconItem[] = [
     },
 ];
 
-const IconsTab: React.FC = () => {
+interface IconsTabProps {
+    isExpanded?: boolean;
+}
+
+const IconsTab: React.FC<IconsTabProps> = ({ isExpanded }) => {
     const onDragStart = (event: React.DragEvent, iconItem: IconItem) => {
         event.dataTransfer.effectAllowed = 'move';
         event.dataTransfer.setData(
@@ -198,13 +202,15 @@ const IconsTab: React.FC = () => {
         );
     };
 
+    const displayedIcons = isExpanded ? ICONS : ICONS.slice(0, 6);
+
     return (
         <div className="icons-tab">
-            <div className="icon-grid">
-                {ICONS.map((iconItem) => (
+            <div className={`icon-grid ${!isExpanded ? 'compact' : ''}`}>
+                {displayedIcons.map((iconItem) => (
                     <div
                         key={iconItem.id}
-                        className="icon-item"
+                        className={`icon-item ${!isExpanded ? 'compact' : ''}`}
                         draggable
                         onDragStart={(e) => onDragStart(e, iconItem)}
                         style={{ background: iconItem.gradient }}

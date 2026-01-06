@@ -1,19 +1,33 @@
 import React, { useState } from 'react';
 import IconsTab from './IconsTab';
 import ShapesTab from './ShapesTab';
+import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import './Sidebar.css';
 
 type TabType = 'icons' | 'shapes';
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+    isCollapsed?: boolean;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
     const [activeTab, setActiveTab] = useState<TabType>('icons');
+    const [isExpanded, setIsExpanded] = useState(false);
 
     return (
-        <div className="sidebar">
-            <div className="sidebar-header">
-                <h3>Component Palette</h3>
-                <p className="sidebar-description">Drag items onto the canvas</p>
-            </div>
+        <div className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${isExpanded ? 'expanded' : 'compact'}`}>
+            {!isCollapsed && (
+                <div className="sidebar-header-accordion" onClick={() => setIsExpanded(!isExpanded)}>
+                    <div className="header-main">
+                        <h3>Palette</h3>
+                        <div className="expand-toggle">
+                            <span>{isExpanded ? 'See less' : 'See more'}</span>
+                            {isExpanded ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
+                        </div>
+                    </div>
+                    {!isExpanded && <p className="sidebar-description">Drag to canvas</p>}
+                </div>
+            )}
 
             <div className="sidebar-tabs">
                 <button
@@ -31,7 +45,11 @@ const Sidebar: React.FC = () => {
             </div>
 
             <div className="sidebar-content">
-                {activeTab === 'icons' ? <IconsTab /> : <ShapesTab />}
+                {activeTab === 'icons' ? (
+                    <IconsTab isExpanded={isExpanded} />
+                ) : (
+                    <ShapesTab isExpanded={isExpanded} />
+                )}
             </div>
         </div>
     );

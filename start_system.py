@@ -20,7 +20,7 @@ def check_backend_health():
 
 def start_backend():
     """Start FastAPI backend"""
-    print("🚀 Starting FastAPI Backend...")
+    print("Starting FastAPI Backend...")
     
     # Add Graphviz to PATH for Windows
     if os.name == 'nt':
@@ -29,7 +29,7 @@ def start_backend():
             os.environ['PATH'] += f";{graphviz_path}"
     
     backend_cmd = [
-        "uv", "run", "uvicorn", "api:app",
+        sys.executable, "-m", "uvicorn", "api:app",
         "--reload", "--host", "127.0.0.1", "--port", "8000"
     ]
     
@@ -42,10 +42,10 @@ def start_backend():
 
 def start_frontend():
     """Start Streamlit frontend"""
-    print("🎨 Starting Streamlit Frontend...")
+    print("Starting Streamlit Frontend...")
     
     frontend_cmd = [
-        "uv", "run", "streamlit", "run", "app.py",
+        sys.executable, "-m", "streamlit", "run", "app.py",
         "--server.port", "8501",
         "--server.address", "127.0.0.1"
     ]
@@ -58,7 +58,7 @@ def start_frontend():
     )
 
 def main():
-    print("🛠️ System Design Generator - Startup Script")
+    print("System Design Generator - Startup Script")
     print("=" * 60)
     
     # Check if we're in the right directory
@@ -74,10 +74,10 @@ def main():
     backend_process = start_backend()
     
     # Wait for backend to start
-    print("⏳ Waiting for backend to start...")
+    print("Waiting for backend to start...")
     for i in range(30):  # Wait up to 30 seconds
         if check_backend_health():
-            print("✅ Backend is running at http://127.0.0.1:8000")
+            print("Backend is running at http://127.0.0.1:8000")
             break
         time.sleep(1)
         print(f"   Checking backend... ({i+1}/30)")
@@ -89,14 +89,14 @@ def main():
     # Start frontend
     frontend_process = start_frontend()
     
-    print("✅ Frontend starting at http://127.0.0.1:8501")
-    print("\n🎉 System Design Generator is ready!")
+    print("Frontend starting at http://127.0.0.1:8501")
+    print("\nSystem Design Generator is ready!")
     print("=" * 60)
-    print("📊 Backend API: http://127.0.0.1:8000")
-    print("🎨 Frontend UI: http://127.0.0.1:8501")
-    print("📚 API Docs: http://127.0.0.1:8000/docs")
+    print("Backend API: http://127.0.0.1:8000")
+    print("Frontend UI: http://127.0.0.1:8501")
+    print("API Docs: http://127.0.0.1:8000/docs")
     print("=" * 60)
-    print("\n💡 Press Ctrl+C to stop both services")
+    print("\nTip: Press Ctrl+C to stop both services")
     
     try:
         # Keep both processes running
@@ -113,7 +113,7 @@ def main():
             time.sleep(1)
     
     except KeyboardInterrupt:
-        print("\n🛑 Shutting down services...")
+        print("\nShutting down services...")
         
         # Terminate processes
         try:
@@ -129,7 +129,7 @@ def main():
             backend_process.kill()
             frontend_process.kill()
         
-        print("✅ Services stopped successfully")
+        print("Services stopped successfully")
 
 if __name__ == "__main__":
     main()
