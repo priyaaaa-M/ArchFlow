@@ -45,7 +45,7 @@ SystemDesignGenerator.zip
     ├── 📄 .env                    # API key configuration template
     ├── 📄 start_system.py         # One-command startup
     ├── 📄 api.py                  # FastAPI backend
-    ├── 📄 app.py                  # Streamlit frontend with canvas
+    ├── (No Python Streamlit frontend included in this branch)
     ├── 📁 services/               # Core AI pipeline
     ├── 📁 prompts/                # AI prompts
     ├── 📁 crawlers/               # Web scraping

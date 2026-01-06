@@ -41,21 +41,13 @@ def start_backend():
     )
 
 def start_frontend():
-    """Start Streamlit frontend"""
-    print("Starting Streamlit Frontend...")
-    
-    frontend_cmd = [
-        sys.executable, "-m", "streamlit", "run", "app.py",
-        "--server.port", "8501",
-        "--server.address", "127.0.0.1"
-    ]
-    
-    return subprocess.Popen(
-        frontend_cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True
-    )
+    """Frontend removed from this repository.
+
+    This project no longer includes a Python Streamlit frontend (app.py).
+    This function remains as a placeholder so older scripts don't fail if
+    accidentally called; it will raise to make the absence explicit.
+    """
+    raise RuntimeError("No Python frontend (app.py) is present in this repository.")
 
 def main():
     print("System Design Generator - Startup Script")
@@ -66,11 +58,7 @@ def main():
         print("❌ Error: api.py not found. Please run this script from the project directory.")
         sys.exit(1)
     
-    if not Path("app.py").exists():
-        print("❌ Error: app.py not found. Please run this script from the project directory.")
-        sys.exit(1)
-    
-    # Start backend
+    # Start backend only (no Python frontend in this repo)
     backend_process = start_backend()
     
     # Wait for backend to start
@@ -85,31 +73,21 @@ def main():
         print("❌ Backend failed to start within 30 seconds")
         backend_process.terminate()
         sys.exit(1)
-    
-    # Start frontend
-    frontend_process = start_frontend()
-    
-    print("Frontend starting at http://127.0.0.1:8501")
+
     print("\nSystem Design Generator is ready!")
     print("=" * 60)
     print("Backend API: http://127.0.0.1:8000")
-    print("Frontend UI: http://127.0.0.1:8501")
     print("API Docs: http://127.0.0.1:8000/docs")
     print("=" * 60)
-    print("\nTip: Press Ctrl+C to stop both services")
+    print("\nTip: Press Ctrl+C to stop the backend service")
     
     try:
-        # Keep both processes running
+        # Keep backend process running
         while True:
-            # Check if processes are still running
+            # Check if process is still running
             if backend_process.poll() is not None:
                 print("❌ Backend process stopped unexpectedly")
                 break
-            
-            if frontend_process.poll() is not None:
-                print("❌ Frontend process stopped unexpectedly")
-                break
-            
             time.sleep(1)
     
     except KeyboardInterrupt:

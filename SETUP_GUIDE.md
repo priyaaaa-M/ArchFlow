@@ -113,7 +113,7 @@ Once running, you can access:
 ```
 LS_Hackathon/
 ├── 📄 api.py                     # FastAPI backend server
-├── 📄 app.py                     # Streamlit frontend with canvas
+├── (No Python Streamlit frontend included in this branch)
 ├── 📄 start_system.py            # Auto-startup script
 ├── 📄 requirements.txt           # Python dependencies
 ├── 📄 .env                       # API keys configuration
