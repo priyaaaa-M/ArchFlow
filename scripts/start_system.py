@@ -29,7 +29,7 @@ def start_backend():
             os.environ['PATH'] += f";{graphviz_path}"
     
     backend_cmd = [
-        sys.executable, "-m", "uvicorn", "api:app",
+        sys.executable, "-m", "uvicorn", "backend.api:app",
         "--reload", "--host", "127.0.0.1", "--port", "8000"
     ]
     
@@ -54,8 +54,9 @@ def main():
     print("=" * 60)
     
     # Check if we're in the right directory
-    if not Path("api.py").exists():
-        print("❌ Error: api.py not found. Please run this script from the project directory.")
+    # Ensure backend package exists
+    if not Path("backend/api.py").exists():
+        print("❌ Error: backend/api.py not found. Please run this script from the project directory.")
         sys.exit(1)
     
     # Start backend only (no Python frontend in this repo)
@@ -93,21 +94,14 @@ def main():
     except KeyboardInterrupt:
         print("\nShutting down services...")
         
-        # Terminate processes
+        # Terminate backend process only
         try:
             backend_process.terminate()
-            frontend_process.terminate()
-            
-            # Wait for graceful shutdown
             backend_process.wait(timeout=5)
-            frontend_process.wait(timeout=5)
-            
         except subprocess.TimeoutExpired:
-            # Force kill if needed
             backend_process.kill()
-            frontend_process.kill()
         
-        print("Services stopped successfully")
+        print("Backend service stopped successfully")
 
 if __name__ == "__main__":
     main()

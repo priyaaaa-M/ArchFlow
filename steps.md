@@ -43,7 +43,7 @@ If it’s already there → good.
 
 Checkpoint 6: Run a full test
 
-Restart your FastAPI server (uvicorn api:app --reload)
+Restart your FastAPI server (uvicorn backend.api:app --reload)
 Send a new generate request (e.g., topic: "Uber system design", type: "HLD")
 Wait for it to finish.
 Check the output/ folder → you should now see a new .png file.

@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("ls-backend")
 
 from services.workflow import run_workflow
-from database import db
+from .database import db
 
 
 app = FastAPI(title="LS Hackathon Backend")

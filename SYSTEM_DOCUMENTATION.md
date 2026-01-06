@@ -510,7 +510,7 @@ curl http://localhost:8000/jobs?limit=10
 ### **Development**
 ```bash
 # Start server
-uv run uvicorn api:app --reload --host 127.0.0.1 --port 8000
+uv run uvicorn backend.api:app --reload --host 127.0.0.1 --port 8000
 
 # Access API docs
 open http://localhost:8000/docs
@@ -525,7 +525,7 @@ pip install -r requirements.txt
 export GEMINI_API_KEY=your_key_here
 
 # Start with multiple workers
-uvicorn api:app --host 0.0.0.0 --port 8000 --workers 4
+uvicorn backend.api:app --host 0.0.0.0 --port 8000 --workers 4
 ```
 
 ### **Docker (Optional)**
@@ -535,7 +535,7 @@ RUN apt-get update && apt-get install -y graphviz chromium-browser
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 COPY . .
-CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "backend.api:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
 ---
